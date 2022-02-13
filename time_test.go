@@ -93,7 +93,6 @@ func TestRandomTimeMultipleVariableExpression(t *testing.T) {
 		layout,
 		24*time.Hour,
 	)
-
 	x, err := generator.RandomTime("x", "x > '2000-01-01' && x < '2010-01-01'")
 	require.NoError(t, err)
 

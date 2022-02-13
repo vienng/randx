@@ -152,9 +152,8 @@ func splitToSingleExpressions(exp *govaluate.EvaluableExpression) ([]*govaluate.
 	var expressions []*govaluate.EvaluableExpression
 	var tokens []string
 	for _, token := range processTokens {
-		if token.Kind != govaluate.LOGICALOP {
-			tokens = append(tokens, fmt.Sprint(token.Value))
-		} else {
+		switch token.Kind {
+		case govaluate.LOGICALOP:
 			subExp, err := govaluate.NewEvaluableExpression(strings.Join(tokens, " "))
 			if err != nil {
 				log.Println(err)
@@ -162,6 +161,10 @@ func splitToSingleExpressions(exp *govaluate.EvaluableExpression) ([]*govaluate.
 			}
 			expressions = append(expressions, subExp)
 			tokens = nil
+		case govaluate.NUMERIC:
+			tokens = append(tokens, fmt.Sprintf(" %f", token.Value))
+		default:
+			tokens = append(tokens, fmt.Sprint(token.Value))
 		}
 	}
 	return expressions, nil
@@ -217,22 +220,4 @@ func evaluateRanges(ranges [][]float64, exp *govaluate.EvaluableExpression) ([][
 		return nil, fmt.Errorf("invalid expression: %s", exp.String())
 	}
 	return finalRanges, nil
-}
-
-func exportExpressionStringFromTokens(tokens []govaluate.ExpressionToken) (string, error) {
-	log.Println(tokens)
-	var conditions []string
-	for _, token := range tokens {
-		switch token.Kind {
-		case govaluate.NUMERIC:
-			conditions = append(conditions, fmt.Sprintf("%f", token.Value))
-		case govaluate.TIME:
-			conditions = append(conditions, fmt.Sprintf("'%s'", token.Value))
-		default:
-			conditions = append(conditions, fmt.Sprint(token.Value))
-		}
-	}
-	exp, err := govaluate.NewEvaluableExpression(strings.Join(conditions, " "))
-	log.Println(exp.Tokens(), exp.String())
-	return exp.String(), err
 }
