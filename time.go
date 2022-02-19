@@ -29,10 +29,9 @@ func NewXTime(min, max time.Time, layout string, step time.Duration) (XTime, err
 		return nil, err
 	}
 	return &defaultXTime{
-		min:    fromDate,
-		max:    toDate,
-		layout: layout,
-		step:   step,
+		min:  fromDate,
+		max:  toDate,
+		step: step,
 	}, nil
 }
 
@@ -69,11 +68,7 @@ func (gen *defaultXTime) RandomTime(variable string, condition string) (time.Tim
 		}
 	}
 
-	newExp, err := gen.toTimestamp(exp)
-	if err != nil {
-		return time.Time{}, err
-	}
-	expressionStr, err := exportExpressionStringFromTokens(newExp.Tokens())
+	expressionStr, err := toTimestamp(exp)
 	if err != nil {
 		return time.Time{}, err
 	}
@@ -85,39 +80,22 @@ func (gen *defaultXTime) RandomTime(variable string, condition string) (time.Tim
 	return time.Unix(int64(randTimestamp), 0), nil
 }
 
-func (gen *defaultXTime) toTimestamp(exp *govaluate.EvaluableExpression) (*govaluate.EvaluableExpression, error) {
-	tokens := make([]govaluate.ExpressionToken, len(exp.Tokens()))
-	for i, token := range exp.Tokens() {
-		if token.Kind == govaluate.TIME {
+func toTimestamp(exp *govaluate.EvaluableExpression) (string, error) {
+	expression := ""
+	for _, token := range exp.Tokens() {
+		switch token.Kind {
+		case govaluate.NUMERIC:
+			expression = expression + fmt.Sprintf(" %f", token.Value)
+		case govaluate.TIME:
 			constTimeExp, err := govaluate.NewEvaluableExpressionFromTokens([]govaluate.ExpressionToken{token})
 			if err != nil {
-				return nil, fmt.Errorf("error create expression from: %v", token)
+				return "", fmt.Errorf("error create expression from: %v", token)
 			}
 			result, err := constTimeExp.Evaluate(nil)
-			if err != nil {
-				return nil, fmt.Errorf("error evaluate expression: %v", constTimeExp)
-			}
-			switch result.(type) {
-			case float64:
-				tokens[i] = govaluate.ExpressionToken{
-					Kind:  govaluate.NUMERIC,
-					Value: result,
-				}
-			case string:
-				tm, err := time.Parse(gen.layout, reflect.ValueOf(result).String())
-				if err != nil {
-					return nil, fmt.Errorf("error parse time: %v", result)
-				}
-				tokens[i] = govaluate.ExpressionToken{
-					Kind:  govaluate.NUMERIC,
-					Value: tm.Unix(),
-				}
-			default:
-				return nil, fmt.Errorf("unknown format: %v", result)
-			}
-		} else {
-			tokens[i] = token
+			expression = expression + fmt.Sprintf(" %f", reflect.ValueOf(result).Float())
+		default:
+			expression = expression + fmt.Sprintf(" %s", token.Value)
 		}
 	}
-	return govaluate.NewEvaluableExpressionFromTokens(tokens)
+	return expression, nil
 }
