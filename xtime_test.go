@@ -21,7 +21,7 @@ func TestXTime(t *testing.T) {
 	}{
 		{"any", "", true},
 		{"constant1", "'2018-01-01'", true},
-		//{"constant2", "2018-01-01", false},
+		//{"constant2", "2018-01-01", false}, TODO
 		{"constant3", "'2018-01-01 19:36:43'", true},
 		{"constant4", "1646644467", false},
 		{"constant5", "'1646644467'", true},
@@ -51,14 +51,6 @@ func TestXTime(t *testing.T) {
 			} else {
 				require.Error(t, err)
 			}
-			//exp, err := govaluate.NewEvaluableExpression(tc.expectedExpression)
-			//require.NoError(t, err)
-			//
-			//params := make(map[string]interface{}, 1)
-			//params["x"] = x
-			//result, err := exp.Evaluate(params)
-			//require.NoError(t, err)
-			//require.True(t, reflect.ValueOf(result).Bool(), "unsatisfied x", exp.String(), x)
 			log.Println("[INFO]", tc.name, tc.condition, "result ->", x)
 		})
 	}
