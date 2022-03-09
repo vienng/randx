@@ -11,7 +11,7 @@ import (
 	"time"
 )
 
-// XNumber implements X
+// XNumber implements interface X, XNumber returns a random number satisfied inputted condition
 type XNumber struct {
 	min    float64
 	max    float64
@@ -24,7 +24,7 @@ func NewXNumber(min, max, step float64) X {
 	return &XNumber{min, max, step, min - step}
 }
 
-// BindOperator returns supported operator of x
+// BindOperator returns supported operator of XNumber
 func (xn XNumber) BindOperator(expression string) XOP {
 	if len(expression) == 0 {
 		return Any
@@ -122,6 +122,14 @@ func (xn XNumber) findMultipleX(expStr string) (interface{}, error) {
 	return randomNumber(finalRanges), nil
 }
 
+/*
+findExpressionRange returns the possible range of X.
+Input of this function must be a SINGLE X expression. In case of multiple X, use splitToSingleExpressions first.
+
+E.g. if the XNumber is initialized with min=0,max=1000,step=1
+"x > 0" --> possible range is [1,1000]
+"x < 100" --> possible range is [0,99]
+*/
 func (xn XNumber) findExpressionRange(exp *govaluate.EvaluableExpression) (expRange []float64, err error) {
 	tokens := exp.Tokens()[2:] // ignore variable and first operator
 	newExp, err := govaluate.NewEvaluableExpressionFromTokens(tokens)
@@ -153,6 +161,10 @@ func (xn XNumber) findExpressionRange(exp *govaluate.EvaluableExpression) (expRa
 	return expRange, nil
 }
 
+/*
+splitToSingleExpression splits an expression with multiple x into the smaller ones.
+the separator when splitting is the govaluate.LOGICALOP
+*/
 func splitToSingleExpressions(exp *govaluate.EvaluableExpression) ([]*govaluate.EvaluableExpression, error) {
 	processTokens := append([]govaluate.ExpressionToken{}, exp.Tokens()...)
 	processTokens = append(processTokens, govaluate.ExpressionToken{Kind: govaluate.LOGICALOP})
@@ -180,7 +192,7 @@ func splitToSingleExpressions(exp *govaluate.EvaluableExpression) ([]*govaluate.
 }
 
 /*
-randomNumber picks a random number in every given ranges [min, max]
+randomNumber picks a random number in every given ranges [min1, max1] [min2, max2]
 then pick a random element from picked slices.
 */
 func randomNumber(numberRanges [][]float64) float64 {
@@ -193,7 +205,9 @@ func randomNumber(numberRanges [][]float64) float64 {
 }
 
 /*
-evaluateRanges
+evaluateRanges returns the final ranges of X.
+"x > 0 && x < 100" --> possible ranges [1,1000] && [0,99] --> final range is [1,99]
+"x < 100 || x > 200" --> possible ranges [1,99] [201,1000] --> final ranges are [1,99] [201,1000]
 */
 func evaluateRanges(ranges [][]float64, exp *govaluate.EvaluableExpression) ([][]float64, error) {
 	if len(ranges) <= 1 {

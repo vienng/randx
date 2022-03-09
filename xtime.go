@@ -9,21 +9,23 @@ import (
 	"time"
 )
 
+// XTime implements interface X, XTime returns a random datetime satisfied inputted condition
 type XTime struct {
 	min  time.Time
 	max  time.Time
 	step time.Duration
 }
 
+// NewXTime makes a new instance for XTime
 func NewXTime(min, max time.Time, step time.Duration) (X, error) {
 	return &XTime{
-		min: min,
-		max: max,
-		//layout: layout,
+		min:  min,
+		max:  max,
 		step: step,
 	}, nil
 }
 
+// BindOperator returns supported operator of XTime
 func (xt XTime) BindOperator(expression string) XOP {
 	if len(expression) == 0 {
 		return Any
@@ -46,23 +48,25 @@ func (xt XTime) BindOperator(expression string) XOP {
 	return Invalid
 }
 
+// Random returns a random datetime satisfied inputted condition
 func (xt XTime) Random(expression string) (interface{}, error) {
 	op := xt.BindOperator(expression)
 	switch op {
 	case Any:
-		return xt.randomTime("")
+		return xt.randomUnixTime("")
 	case Constant, FindX, FindXs:
 		newExp, err := xt.toTimestamp(expression)
 		if err != nil {
 			return nil, err
 		}
-		return xt.randomTime(newExp)
+		return xt.randomUnixTime(newExp)
 	default:
 		return time.Time{}, fmt.Errorf("invalid expression %s", expression)
 	}
 }
 
-func (xt XTime) randomTime(exp string) (interface{}, error) {
+// randomUnixTime treats the timestamp as an int64 number. randomUnixTime uses XNumber to random a timestamp
+func (xt XTime) randomUnixTime(exp string) (interface{}, error) {
 	xNumber := NewXNumber(float64(xt.min.Unix()), float64(xt.max.Unix()), xt.step.Seconds())
 	value, err := xNumber.Random(exp)
 	if err != nil {
@@ -72,6 +76,7 @@ func (xt XTime) randomTime(exp string) (interface{}, error) {
 	return time.Unix(randomTimestamp, 0), nil
 }
 
+// toTimestamp coverts the detected datetime (any format) into timestamp
 func (xt XTime) toTimestamp(expStr string) (string, error) {
 	exp, err := govaluate.NewEvaluableExpression(expStr)
 	if err != nil {
@@ -93,12 +98,6 @@ func (xt XTime) toTimestamp(expStr string) (string, error) {
 			switch result.(type) {
 			case float64:
 				elems[i] = fmt.Sprintf("%f", reflect.ValueOf(result).Float())
-			//case string:
-			//	tm, err := time.Parse(xt.layout, reflect.ValueOf(result).String())
-			//	if err != nil {
-			//		return "", fmt.Errorf("error parse time: %v", result)
-			//	}
-			//	elems[i] = fmt.Sprintf("%d", tm.Unix())
 			default:
 				return "", fmt.Errorf("unknown time format: %v", result)
 			}
@@ -106,6 +105,5 @@ func (xt XTime) toTimestamp(expStr string) (string, error) {
 			elems[i] = fmt.Sprint(token.Value)
 		}
 	}
-	log.Println("DEVVVV", strings.Join(elems, " "))
 	return strings.Join(elems, " "), nil
 }
