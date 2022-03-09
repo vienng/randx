@@ -37,4 +37,5 @@ func TestLocalizedWordGenerator(t *testing.T) {
 	words4 := wordGenerator.RandomWorlds(4)
 	require.Len(t, words4, 4)
 	log.Println(strings.Join(words4, " "))
+	"length = 3 && contain 'Vien' && begin_with 'Nguyen'"
 }
