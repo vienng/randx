@@ -15,6 +15,8 @@ const (
 	Constant
 	FindX
 	FindXs
+
+	Regex
 )
 
 // XOP defines operator of X
@@ -42,6 +44,8 @@ func (op XOP) String() string {
 		return "FindX"
 	case FindXs:
 		return "FindXs"
+	case Regex:
+		return "Regex"
 	default:
 		return "Unknown"
 	}

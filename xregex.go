@@ -1,24 +1,30 @@
 package randx
 
-import regen "github.com/zach-klippenstein/goregen"
+import (
+	regen "github.com/zach-klippenstein/goregen"
+	"math/rand"
+	"time"
+)
 
-type XRegex interface {
-	RandomString() string
+// XRegex implements interface X, random a string with inputted regex
+type XRegex struct{}
+
+// NewXRegex makes a new instance for XRegex
+func NewXRegex() X {
+	return XRegex{}
 }
 
-type xRegex struct {
-	regex string
-	gen   regen.Generator
+// BindOperator returns Regex XOP
+func (xr XRegex) BindOperator(regex string) XOP {
+	return Regex
 }
 
-func NewXRegex(regex string) (XRegex, error) {
-	generator, err := regen.NewGenerator(regex, nil)
+// Random returns a random string generated from inputted regex
+func (xr XRegex) Random(regex string) (interface{}, error) {
+	randAgr := &regen.GeneratorArgs{RngSource: rand.NewSource(time.Now().UnixNano())}
+	generator, err := regen.NewGenerator(regex, randAgr)
 	if err != nil {
 		return nil, err
 	}
-	return &xRegex{regex: regex, gen: generator}, nil
-}
-
-func (g *xRegex) RandomString() string {
-	return g.gen.Generate()
+	return generator.Generate(), nil
 }
