@@ -2,29 +2,26 @@ package randx
 
 import (
 	"encoding/csv"
+	"fmt"
 	"github.com/Knetic/govaluate"
 	"math/rand"
 	"os"
+	"reflect"
 	"strings"
 	"time"
 )
 
 const (
 	defaultWordSource = "/usr/share/dict/propernames" // Default proper names on a Unix machine
-	length
-	contain
-	begin
 )
 
-//type XWord interface {
-//	RandomWorlds(wordCount int) []string
-//}
-
-type XName struct {
+// XWord implements interface X
+type XWord struct {
 	words []string
 }
 
-func NewXName(sourcePath string) (*XName, error) {
+// NewXWord makes a new instance for XWord
+func NewXWord(sourcePath string) (X, error) {
 	if sourcePath == "" {
 		sourcePath = defaultWordSource
 	}
@@ -41,86 +38,96 @@ func NewXName(sourcePath string) (*XName, error) {
 	for i, line := range lines {
 		words[i] = strings.Join(line, " ")
 	}
-	return &XName{
+	return &XWord{
 		words: words,
 	}, nil
 }
 
-func (xName XName) Random(x string, xExpression string) (interface{}, error) {
-	switch x {
-	case length:
-		return xName.randomNWords("")
+/*
+BindOperator returns the detected operator of XWord in the input condition:
+"length (>=<) 4"
+"begin = 'Marry'"
+"end = 'Marry' "
+*/
+func (xw XWord) BindOperator(expression string) XOP {
+	if len(expression) == 0 {
+		return Any
 	}
-	//if wordCount < 1 {
-	//	return []string{}
-	//}
-	//
-	//words := make([]string, wordCount)
-	//for i := range words {
-	//	idx := rand.New(source).Intn(len(gen.words))
-	//	words[i] = gen.words[idx]
-	//}
-	//return words
+	lwExp := strings.ToLower(expression)
+	if strings.Contains(lwExp, "length") {
+		return Length
+	}
+	if strings.Contains(lwExp, "begin") {
+		return Begin
+	}
+	if strings.Contains(lwExp, "end") {
+		return End
+	}
+	return Invalid
 }
 
-func (xName XName) any(n int) []string {
+// Random returns random words matching input condition
+func (xw XWord) Random(xExpression string) (interface{}, error) {
+	op := xw.BindOperator(xExpression)
+	switch op {
+	case Any:
+		return xw.any(1), nil
+	case Length:
+		return xw.randomWordsWithLength(xExpression)
+	case Begin:
+		return xw.randomWordsBeginWith(xExpression)
+	case End:
+		return xw.randomWordsEndWith(xExpression)
+	case Invalid:
+		return xw.any(0), fmt.Errorf("invalid expression %s", xExpression)
+	default:
+		return xw.any(0), nil
+	}
+}
+
+func (xw XWord) any(n int) []string {
 	words := make([]string, n)
-	source := rand.NewSource(time.Now().Unix())
+	source := rand.NewSource(time.Now().UnixNano())
 	for i := range words {
-		idx := rand.New(source).Intn(len(xName.words))
-		words[i] = xName.words[idx]
+		idx := rand.New(source).Intn(len(xw.words))
+		words[i] = xw.words[idx]
 	}
 	return words
 }
 
-func (xName XName) randomNWords(expression string) ([]string, error) {
-	var words []string
-	if expression == "" {
-		return xName.any(3), nil
+func (xw XWord) randomWordsWithLength(expression string) ([]string, error) {
+	xn := NewXNumber(0, 1000, 1)
+	length, err := xn.Random(expression)
+	if err != nil {
+		return nil, err
 	}
+	return xw.any(int(reflect.ValueOf(length).Float())), nil
+}
+
+func (xw XWord) randomWordsBeginWith(expression string) ([]string, error) {
 	exp, err := govaluate.NewEvaluableExpression(expression)
 	if err != nil {
 		return nil, err
 	}
-	if len(exp.Tokens()) < 3 {
-		return xName.any(3), nil
+	if len(exp.Tokens()) != 3 {
+		return nil, fmt.Errorf("invalid expression: %v", expression)
 	}
-	variable := exp.Tokens()[0]
-	operator := exp.Tokens()[1]
-	if variable.Value != length || operator.Kind != govaluate.COMPARATOR {
-		return xName.any(3), nil
+	if exp.Tokens()[2].Kind != govaluate.STRING {
+		return nil, fmt.Errorf("unknown begin word: %v", exp.Tokens()[2].Value)
 	}
-	lengthConstantExp, err := govaluate.NewEvaluableExpressionFromTokens(exp.Tokens()[2:])
+	return append([]string{reflect.ValueOf(exp.Tokens()[2].Value).String()}, xw.any(2)...), nil
+}
+
+func (xw XWord) randomWordsEndWith(expression string) ([]string, error) {
+	exp, err := govaluate.NewEvaluableExpression(expression)
 	if err != nil {
 		return nil, err
 	}
-	expectedLength, err := lengthConstantExp.
-
-	switch operator.Value {
-	case govaluate.EQ:
-		return
+	if len(exp.Tokens()) != 3 {
+		return nil, fmt.Errorf("invalid expression: %v", expression)
 	}
-	return words, nil
+	if exp.Tokens()[2].Kind != govaluate.STRING {
+		return nil, fmt.Errorf("unknown begin word: %v", exp.Tokens()[2].Value)
+	}
+	return append(xw.any(2), reflect.ValueOf(exp.Tokens()[2].Value).String()), nil
 }
-
-func (xName XName) randomNameContain() []string {
-
-}
-
-func (xName XName) randomNameBeginWith() []string {
-
-}
-
-//func (gen defaultXWord) RandomWorlds(wordCount int) []string {
-//	source := rand.NewSource(time.Now().Unix())
-//	if wordCount < 1 {
-//		return []string{}
-//	}
-//
-//	words := make([]string, wordCount)
-//	for i := range words {
-//		idx := rand.New(source).Intn(len(gen.words))
-//		words[i] = gen.words[idx]
-//	}
-//	return words
-//}
