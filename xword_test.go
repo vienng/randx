@@ -8,8 +8,7 @@ import (
 )
 
 func TestXWord(t *testing.T) {
-	generator, err := NewXWord("etc/vietnamese")
-	require.NoError(t, err)
+	generator := NewXWord("etc/vietnamese")
 
 	testCases := []struct {
 		expression        string

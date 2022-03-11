@@ -207,7 +207,7 @@ func randomNumber(numberRanges [][]float64) float64 {
 /*
 evaluateRanges returns the final ranges of X.
 "x > 0 && x < 100" --> possible ranges [1,1000] && [0,99] --> final range is [1,99]
-"x < 100 || x > 200" --> possible ranges [1,99] [201,1000] --> final ranges are [1,99] [201,1000]
+"x < 100 || x > 200" --> possible ranges [1,99] || [201,1000] --> final ranges are [1,99] [201,1000]
 */
 func evaluateRanges(ranges [][]float64, exp *govaluate.EvaluableExpression) ([][]float64, error) {
 	if len(ranges) <= 1 {
