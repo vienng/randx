@@ -46,7 +46,7 @@ func BenchmarkXWord_BindOperator(b *testing.B) {
 func BenchmarkXTime_BindOperator(b *testing.B) {
 	xt := NewXTime(time.Now().AddDate(-100, 0, 0), time.Now(), time.Second)
 	for i := 0; i < b.N; i++ {
-		xt.BindOperator("begin == 'John'")
+		xt.BindOperator("created_at > '01-01-2021'")
 	}
 }
 
