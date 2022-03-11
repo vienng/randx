@@ -8,7 +8,7 @@ import (
 )
 
 func TestXWord(t *testing.T) {
-	generator := NewXWord("")
+	generator := NewXWord("etc/vietnamese")
 
 	testCases := []struct {
 		expression        string

@@ -13,7 +13,7 @@ func BenchmarkNewXNumber(b *testing.B) {
 
 func BenchmarkNewXWord(b *testing.B) {
 	for i := 0; i < b.N; i++ {
-		NewXWord("")
+		NewXWord("etc/vietnamese")
 	}
 }
 
@@ -37,7 +37,7 @@ func BenchmarkXNumber_BindOperator(b *testing.B) {
 }
 
 func BenchmarkXWord_BindOperator(b *testing.B) {
-	xw := NewXWord("")
+	xw := NewXWord("etc/vietnamese")
 	for i := 0; i < b.N; i++ {
 		xw.BindOperator("begin == 'John'")
 	}
@@ -68,7 +68,7 @@ func BenchmarkXNumber_Random(b *testing.B) {
 }
 
 func BenchmarkXWord_Random(b *testing.B) {
-	xw := NewXWord("")
+	xw := NewXWord("etc/vietnamese")
 	for i := 0; i < b.N; i++ {
 		_, err := xw.Random("length == 3")
 		if err != nil {
