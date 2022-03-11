@@ -11,8 +11,7 @@ func TestXTime(t *testing.T) {
 	startTime := time.Now().AddDate(-100, 0, 0)
 	endTime := time.Now()
 	step := 24 * time.Hour
-	generator, err := NewXTime(startTime, endTime, step)
-	require.NoError(t, err)
+	generator := NewXTime(startTime, endTime, step)
 
 	testCases := []struct {
 		name              string

@@ -17,12 +17,12 @@ type XTime struct {
 }
 
 // NewXTime makes a new instance for XTime
-func NewXTime(min, max time.Time, step time.Duration) (X, error) {
+func NewXTime(min, max time.Time, step time.Duration) X {
 	return &XTime{
 		min:  min,
 		max:  max,
 		step: step,
-	}, nil
+	}
 }
 
 // BindOperator returns supported operator of XTime

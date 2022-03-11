@@ -4,6 +4,7 @@ import (
 	"encoding/csv"
 	"fmt"
 	"github.com/Knetic/govaluate"
+	"log"
 	"math/rand"
 	"os"
 	"reflect"
@@ -21,18 +22,18 @@ type XWord struct {
 }
 
 // NewXWord makes a new instance for XWord
-func NewXWord(sourcePath string) (X, error) {
+func NewXWord(sourcePath string) X {
 	if sourcePath == "" {
 		sourcePath = defaultWordSource
 	}
 	f, err := os.Open(sourcePath)
 	defer f.Close()
 	if err != nil {
-		return nil, err
+		log.Fatal(err)
 	}
 	lines, err := csv.NewReader(f).ReadAll()
 	if err != nil {
-		return nil, err
+		log.Fatal(err)
 	}
 	words := make([]string, len(lines))
 	for i, line := range lines {
@@ -40,7 +41,7 @@ func NewXWord(sourcePath string) (X, error) {
 	}
 	return &XWord{
 		words: words,
-	}, nil
+	}
 }
 
 /*
