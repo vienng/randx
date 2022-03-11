@@ -1,4 +1,4 @@
-module vienng/person
+module vienng/randx
 
 go 1.16
 
