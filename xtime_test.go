@@ -44,11 +44,11 @@ func TestXTime(t *testing.T) {
 		tc := testCases[i]
 
 		t.Run(tc.name, func(t *testing.T) {
-			x, err := generator.Random(tc.condition)
+			x := generator.Random(tc.condition)
 			if tc.isValidExpression {
-				require.NoError(t, err)
+				require.NotZero(t, x)
 			} else {
-				require.Error(t, err)
+				require.Zero(t, x)
 			}
 			log.Println("[INFO]", tc.name, tc.condition, "result ->", x)
 		})

@@ -42,12 +42,7 @@ func TestXNumber(t *testing.T) {
 		tc := testCases[i]
 
 		t.Run(tc.name, func(t *testing.T) {
-			x, err := generator.Random(tc.condition)
-			if tc.isValidExpression {
-				require.NoError(t, err)
-			} else {
-				require.Error(t, err)
-			}
+			x := generator.Random(tc.condition)
 			exp, err := govaluate.NewEvaluableExpression(tc.expectedExpression)
 			require.NoError(t, err)
 

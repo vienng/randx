@@ -16,13 +16,14 @@ const (
 	defaultWordSource = "/usr/share/dict/propernames" // Default proper names on a Unix machine
 )
 
-// XWord implements interface X
-type XWord struct {
-	words []string
+// XWords implements interface X
+type XWords struct {
+	words    []string
+	fallback interface{}
 }
 
-// NewXWord makes a new instance for XWord
-func NewXWord(sourcePath string) X {
+// NewXWords makes a new instance for XWords
+func NewXWords(sourcePath string) X {
 	if sourcePath == "" {
 		sourcePath = defaultWordSource
 	}
@@ -39,18 +40,26 @@ func NewXWord(sourcePath string) X {
 	for i, line := range lines {
 		words[i] = strings.Join(line, " ")
 	}
-	return &XWord{
-		words: words,
+	return &XWords{
+		words:    words,
+		fallback: []string{},
 	}
 }
 
 /*
-BindOperator returns the detected operator of XWord in the input condition:
+SetFallback sets the value to be returned when the random function troubled.
+*/
+func (xw *XWords) SetFallback(fallback interface{}) {
+	xw.fallback = fallback
+}
+
+/*
+BindOperator returns the detected operator of XWords in the input condition:
 "length (>=<) 4"
 "begin = 'Marry'"
 "end = 'Marry' "
 */
-func (xw XWord) BindOperator(expression string) XOP {
+func (xw XWords) BindOperator(expression string) XOP {
 	if len(expression) == 0 {
 		return Any
 	}
@@ -68,11 +77,11 @@ func (xw XWord) BindOperator(expression string) XOP {
 }
 
 // Random returns random words matching input condition
-func (xw XWord) Random(xExpression string) (interface{}, error) {
+func (xw XWords) Random(xExpression string) interface{} {
 	op := xw.BindOperator(xExpression)
 	switch op {
 	case Any:
-		return xw.any(1), nil
+		return xw.any(1)
 	case Length:
 		return xw.randomWordsWithLength(xExpression)
 	case Begin:
@@ -80,13 +89,13 @@ func (xw XWord) Random(xExpression string) (interface{}, error) {
 	case End:
 		return xw.randomWordsEndWith(xExpression)
 	case Invalid:
-		return xw.any(0), fmt.Errorf("invalid expression %s", xExpression)
+		return xw.fallback
 	default:
-		return xw.any(0), nil
+		return xw.any(0)
 	}
 }
 
-func (xw XWord) any(n int) []string {
+func (xw XWords) any(n int) []string {
 	words := make([]string, n)
 	source := rand.NewSource(time.Now().UnixNano())
 	for i := range words {
@@ -96,39 +105,46 @@ func (xw XWord) any(n int) []string {
 	return words
 }
 
-func (xw XWord) randomWordsWithLength(expression string) ([]string, error) {
+func (xw XWords) randomWordsWithLength(expression string) interface{} {
 	xn := NewXNumber(0, 1000, 1)
-	length, err := xn.Random(expression)
-	if err != nil {
-		return nil, err
+	xn.SetFallback(-999)
+	length := xn.Random(expression)
+	if length == -999 {
+		return xw.fallback
 	}
-	return xw.any(int(reflect.ValueOf(length).Float())), nil
+	return xw.any(int(reflect.ValueOf(length).Float()))
 }
 
-func (xw XWord) randomWordsBeginWith(expression string) ([]string, error) {
+func (xw XWords) randomWordsBeginWith(expression string) interface{} {
 	exp, err := govaluate.NewEvaluableExpression(expression)
 	if err != nil {
-		return nil, err
+		log.Println(err)
+		return xw.fallback
 	}
 	if len(exp.Tokens()) != 3 {
-		return nil, fmt.Errorf("invalid expression: %v", expression)
+		log.Println(fmt.Errorf("invalid expression: %v", expression))
+		return xw.fallback
 	}
 	if exp.Tokens()[2].Kind != govaluate.STRING {
-		return nil, fmt.Errorf("unknown begin word: %v", exp.Tokens()[2].Value)
+		log.Println(fmt.Errorf("unknown begin word: %v", exp.Tokens()[2].Value))
+		return xw.fallback
 	}
-	return append([]string{reflect.ValueOf(exp.Tokens()[2].Value).String()}, xw.any(2)...), nil
+	return append([]string{reflect.ValueOf(exp.Tokens()[2].Value).String()}, xw.any(2)...)
 }
 
-func (xw XWord) randomWordsEndWith(expression string) ([]string, error) {
+func (xw XWords) randomWordsEndWith(expression string) interface{} {
 	exp, err := govaluate.NewEvaluableExpression(expression)
 	if err != nil {
-		return nil, err
+		log.Println(exp)
+		return xw.fallback
 	}
 	if len(exp.Tokens()) != 3 {
-		return nil, fmt.Errorf("invalid expression: %v", expression)
+		log.Println(fmt.Errorf("invalid expression: %v", expression))
+		return xw.fallback
 	}
 	if exp.Tokens()[2].Kind != govaluate.STRING {
-		return nil, fmt.Errorf("unknown begin word: %v", exp.Tokens()[2].Value)
+		log.Println(fmt.Errorf("unknown begin word: %v", exp.Tokens()[2].Value))
+		return xw.fallback
 	}
-	return append(xw.any(2), reflect.ValueOf(exp.Tokens()[2].Value).String()), nil
+	return append(xw.any(2), reflect.ValueOf(exp.Tokens()[2].Value).String())
 }
