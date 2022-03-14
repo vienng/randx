@@ -7,7 +7,7 @@ import (
 	"time"
 )
 
-func TestMyUserCases(t *testing.T) {
+func TestSampleUserCases(t *testing.T) {
 	template := NewSampleTemplate()
 	eighteenYearsAgo := time.Now().AddDate(-18, 0, 0)
 
@@ -21,8 +21,7 @@ func TestMyUserCases(t *testing.T) {
 			func(u *User) bool { return true },
 		},
 		{
-			"adult",
-			SomeOne(template).WithDOB(fmt.Sprintf("birthdate < '%s'", eighteenYearsAgo.Format(time.RFC3339))),
+			"adult", SomeOne(template).WithDOB(fmt.Sprintf("birthdate < '%s'", eighteenYearsAgo.Format(time.RFC3339))),
 			func(u *User) bool {
 				return u.DOB.(time.Time).Before(eighteenYearsAgo)
 			},
