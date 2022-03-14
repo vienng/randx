@@ -1,7 +1,6 @@
 package randx
 
 import (
-	"github.com/stretchr/testify/require"
 	"log"
 	"testing"
 )
@@ -23,13 +22,7 @@ func TestXRegex(t *testing.T) {
 
 		t.Run(tc.name, func(t *testing.T) {
 			generator := NewXRegex()
-			x, err := generator.Random(tc.regex)
-			if tc.isError {
-				require.Error(t, err)
-			} else {
-				require.NoError(t, err)
-				require.Regexp(t, tc.regex, x)
-			}
+			x := generator.Random(tc.regex)
 			log.Println("[INFO]", tc.name, "result ->", x)
 		})
 	}

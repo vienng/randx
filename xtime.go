@@ -11,18 +11,24 @@ import (
 
 // XTime implements interface X, XTime returns a random datetime satisfied inputted condition
 type XTime struct {
-	min  time.Time
-	max  time.Time
-	step time.Duration
+	min      time.Time
+	max      time.Time
+	step     time.Duration
+	fallback interface{}
 }
 
 // NewXTime makes a new instance for XTime
 func NewXTime(min, max time.Time, step time.Duration) X {
 	return &XTime{
-		min:  min,
-		max:  max,
-		step: step,
+		min:      min,
+		max:      max,
+		step:     step,
+		fallback: time.Time{},
 	}
+}
+
+func (xt *XTime) SetFallback(value interface{}) {
+	xt.fallback = value
 }
 
 // BindOperator returns supported operator of XTime
@@ -49,7 +55,7 @@ func (xt XTime) BindOperator(expression string) XOP {
 }
 
 // Random returns a random datetime satisfied inputted condition
-func (xt XTime) Random(expression string) (interface{}, error) {
+func (xt XTime) Random(expression string) interface{} {
 	op := xt.BindOperator(expression)
 	switch op {
 	case Any:
@@ -57,23 +63,25 @@ func (xt XTime) Random(expression string) (interface{}, error) {
 	case Constant, FindX, FindXs:
 		newExp, err := xt.toTimestamp(expression)
 		if err != nil {
-			return nil, err
+			log.Println(err)
+			return xt.fallback
 		}
 		return xt.randomUnixTime(newExp)
 	default:
-		return time.Time{}, fmt.Errorf("invalid expression %s", expression)
+		return xt.fallback
 	}
 }
 
 // randomUnixTime treats the timestamp as an int64 number. randomUnixTime uses XNumber to random a timestamp
-func (xt XTime) randomUnixTime(exp string) (interface{}, error) {
+func (xt XTime) randomUnixTime(exp string) interface{} {
 	xNumber := NewXNumber(float64(xt.min.Unix()), float64(xt.max.Unix()), xt.step.Seconds())
-	value, err := xNumber.Random(exp)
-	if err != nil {
-		return time.Time{}, err
+	xNumber.SetFallback(-999)
+	value := xNumber.Random(exp)
+	if value == -999 {
+		return xt.fallback
 	}
 	randomTimestamp := int64(reflect.ValueOf(value).Float())
-	return time.Unix(randomTimestamp, 0), nil
+	return time.Unix(randomTimestamp, 0)
 }
 
 // toTimestamp coverts the detected datetime (any format) into timestamp

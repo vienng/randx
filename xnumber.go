@@ -13,15 +13,19 @@ import (
 
 // XNumber implements interface X, XNumber returns a random number satisfied inputted condition
 type XNumber struct {
-	min    float64
-	max    float64
-	step   float64
-	errorN float64
+	min      float64
+	max      float64
+	step     float64
+	fallback interface{}
 }
 
 // NewXNumber creates a new instance for XNumber
 func NewXNumber(min, max, step float64) X {
 	return &XNumber{min, max, step, min - step}
+}
+
+func (xn *XNumber) SetFallback(value interface{}) {
+	xn.fallback = value
 }
 
 // BindOperator returns supported operator of XNumber
@@ -57,11 +61,11 @@ func uniqVars(slice []string) []string {
 }
 
 // Random generates a random number x that satisfies given conditions
-func (xn XNumber) Random(condition string) (interface{}, error) {
+func (xn XNumber) Random(condition string) interface{} {
 	kind := xn.BindOperator(condition)
 	switch kind {
 	case Any:
-		return randomNumber([][]float64{{xn.min, xn.max}}), nil
+		return randomNumber([][]float64{{xn.min, xn.max}})
 	case Constant:
 		return xn.constantNumber(condition)
 	case FindX:
@@ -69,57 +73,65 @@ func (xn XNumber) Random(condition string) (interface{}, error) {
 	case FindXs:
 		return xn.findMultipleX(condition)
 	default:
-		return xn.errorN, fmt.Errorf("invalid or not supported expression")
+		return xn.fallback
 	}
 }
 
-func (xn XNumber) constantNumber(expStr string) (interface{}, error) {
+func (xn XNumber) constantNumber(expStr string) interface{} {
 	expression, err := govaluate.NewEvaluableExpression(expStr)
 	if err != nil {
-		return xn.errorN, err
+		log.Println(err)
+		return xn.fallback
 	}
 	result, err := expression.Evaluate(nil)
 	if err != nil {
-		return xn.errorN, err
+		log.Println(err)
+		return xn.fallback
 	}
-	return reflect.ValueOf(result).Float(), nil
+	return reflect.ValueOf(result).Float()
 }
 
-func (xn XNumber) findSingleX(expStr string) (interface{}, error) {
+func (xn XNumber) findSingleX(expStr string) interface{} {
 	expression, err := govaluate.NewEvaluableExpression(expStr)
 	if err != nil {
-		return xn.errorN, err
+		log.Println(err)
+		return xn.fallback
 	}
 	numberRange, err := xn.findExpressionRange(expression)
 	if err != nil {
-		return xn.errorN, err
+		log.Println(err)
+		return xn.fallback
 	}
-	return randomNumber([][]float64{numberRange}), nil
+	return randomNumber([][]float64{numberRange})
 }
 
-func (xn XNumber) findMultipleX(expStr string) (interface{}, error) {
+func (xn XNumber) findMultipleX(expStr string) interface{} {
 	expression, err := govaluate.NewEvaluableExpression(expStr)
 	if err != nil {
-		return xn.errorN, err
+		log.Println(err)
+		return xn.fallback
 	}
 	expressions, err := splitToSingleExpressions(expression)
 	if err != nil {
-		return xn.errorN, err
+		log.Println(err)
+		return xn.fallback
 	}
 
 	var allRanges [][]float64
 	for _, exp := range expressions {
 		r, err := xn.findExpressionRange(exp)
 		if err != nil {
-			return xn.errorN, err
+			log.Println(err)
+			return xn.fallback
 		}
 		allRanges = append(allRanges, r)
 	}
 	finalRanges, err := evaluateRanges(allRanges, expression)
 	if err != nil {
-		return xn.errorN, err
+		log.Println(err)
+		return xn.fallback
 	}
-	return randomNumber(finalRanges), nil
+	return randomNumber(finalRanges)
 }
 
 /*

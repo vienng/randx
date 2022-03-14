@@ -7,8 +7,9 @@ import (
 	"testing"
 )
 
-func TestXWord(t *testing.T) {
-	generator := NewXWord("etc/vietnamese")
+func TestXWords(t *testing.T) {
+	generator := NewXWords("etc/vietnamese")
+	generator.SetFallback([]string{"ERROR"})
 
 	testCases := []struct {
 		expression        string
@@ -35,11 +36,11 @@ func TestXWord(t *testing.T) {
 		tc := testCases[i]
 
 		t.Run(tc.expression, func(t *testing.T) {
-			words, err := generator.Random(tc.expression)
+			words := generator.Random(tc.expression)
 			if tc.isValidExpression {
-				require.NoError(t, err)
+				require.NotEqual(t, []string{"ERROR"}, words)
 			} else {
-				require.Error(t, err)
+				require.Equal(t, []string{"ERROR"}, words)
 			}
 			log.Println("[INFO]", tc.expression, "result ->", strings.Join(words.([]string), " "))
 		})

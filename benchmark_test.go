@@ -13,7 +13,7 @@ func BenchmarkNewXNumber(b *testing.B) {
 
 func BenchmarkNewXWord(b *testing.B) {
 	for i := 0; i < b.N; i++ {
-		NewXWord("etc/vietnamese")
+		NewXWords("etc/vietnamese")
 	}
 }
 
@@ -37,7 +37,7 @@ func BenchmarkXNumber_BindOperator(b *testing.B) {
 }
 
 func BenchmarkXWord_BindOperator(b *testing.B) {
-	xw := NewXWord("etc/vietnamese")
+	xw := NewXWords("etc/vietnamese")
 	for i := 0; i < b.N; i++ {
 		xw.BindOperator("begin == 'John'")
 	}
@@ -60,39 +60,27 @@ func BenchmarkXRegex_BindOperator(b *testing.B) {
 func BenchmarkXNumber_Random(b *testing.B) {
 	xn := NewXNumber(0, 1000000, 1)
 	for i := 0; i < b.N; i++ {
-		_, err := xn.Random("x > 0 && x < 100")
-		if err != nil {
-			b.FailNow()
-		}
+		xn.Random("x > 0 && x < 100")
 	}
 }
 
 func BenchmarkXWord_Random(b *testing.B) {
-	xw := NewXWord("etc/vietnamese")
+	xw := NewXWords("etc/vietnamese")
 	for i := 0; i < b.N; i++ {
-		_, err := xw.Random("length == 3")
-		if err != nil {
-			b.FailNow()
-		}
+		xw.Random("length == 3")
 	}
 }
 
 func BenchmarkXTime_Random(b *testing.B) {
 	xt := NewXTime(time.Now().AddDate(-100, 0, 0), time.Now(), 365*24*time.Hour)
 	for i := 0; i < b.N; i++ {
-		_, err := xt.Random("day > '1960-01-01' || day < '1990-01-01'")
-		if err != nil {
-			b.FailNow()
-		}
+		xt.Random("day > '1960-01-01' || day < '1990-01-01'")
 	}
 }
 
 func BenchmarkXRegex_Random(b *testing.B) {
 	xr := NewXRegex()
 	for i := 0; i < b.N; i++ {
-		_, err := xr.Random("^[a-z]{6}{[0-9]{3}$")
-		if err != nil {
-			b.FailNow()
-		}
+		xr.Random("^[a-z]{6}{[0-9]{3}$")
 	}
 }
