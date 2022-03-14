@@ -7,7 +7,7 @@ import (
 	"time"
 )
 
-func TestUserCases(t *testing.T) {
+func TestMyUserCases(t *testing.T) {
 	template := NewSampleTemplate()
 	eighteenYearsAgo := time.Now().AddDate(-18, 0, 0)
 
@@ -28,14 +28,13 @@ func TestUserCases(t *testing.T) {
 			},
 		},
 		{
-			"name_begin", SomeOne(template).WithName("begins == 'Nguyễn'"),
+			"name_begin_with_nguyen", SomeOne(template).WithName("begins == 'Nguyễn'"),
 			func(u *User) bool {
 				return u.Name.([]string)[0] == "Nguyễn"
 			},
 		},
 		{
-			"tax_free",
-			SomeOne(template).WithTaxPercent("0"),
+			"tax_free", SomeOne(template).WithTaxPercent("0"),
 			func(u *User) bool {
 				return u.TaxPercent.(float64) == 0
 			},
@@ -57,7 +56,7 @@ func TestUserCases(t *testing.T) {
 				WithTaxPercent("tax_fee > 0.1").
 				WithScore("score > 100 && score < 300").
 				WithName("length == 4").
-				WithDOB(fmt.Sprintf("birthdate < '%s'", eighteenYearsAgo)),
+				WithDOB(fmt.Sprintf("birthdate < '%s'", eighteenYearsAgo.Format(time.RFC3339))),
 			func(u *User) bool {
 				return u.TaxPercent.(float64) > 0.1 &&
 					u.Score.(float64) > 100 && u.Score.(float64) < 300 &&
