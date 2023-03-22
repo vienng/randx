@@ -1,6 +1,9 @@
 randx
 ====
 Provides methods for picking a random value that satisfy user-readable conditions.
+```shell
+$go install github.com/vienng/randx
+```
 
 Which value would you choose between the boundaries?
 --

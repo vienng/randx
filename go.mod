@@ -1,4 +1,4 @@
-module vienng/randx
+module github.com/vienng/randx
 
 go 1.16
 
